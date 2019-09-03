@@ -58,12 +58,13 @@ export class FilesRouter {
         });
     } else {
       filesController
-        .getFileData(config, filename)
-        .then(data => {
+        .getFileStream(config, filename)
+        .then(({ stream, meta }) => {
           res.status(200);
           res.set('Content-Type', contentType);
-          res.set('Content-Length', data.length);
-          res.end(data);
+          res.set('Content-Length', meta.length);
+
+          stream.pipe(res);
         })
         .catch(() => {
           res.status(404);
