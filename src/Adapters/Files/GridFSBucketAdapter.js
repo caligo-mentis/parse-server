@@ -71,8 +71,8 @@ export class GridFSBucketAdapter extends FilesAdapter {
   }
 
   async getFileData(filename: string) {
-    const stream = await this.getDownloadStream(filename);
-    stream.read();
+    const { stream } = await this.getFileStream(filename);
+
     return new Promise((resolve, reject) => {
       const chunks = [];
       stream.on('data', data => {
@@ -97,9 +97,36 @@ export class GridFSBucketAdapter extends FilesAdapter {
     );
   }
 
-  async getDownloadStream(filename: string) {
+  async getFileStream(filename: string, options) {
     const bucket = await this._getBucket();
-    return bucket.openDownloadStreamByName(filename);
+    const { start = 0, end } = options;
+
+    let expectedEnd;
+
+    if (end) expectedEnd = end + 1;
+
+    const stream = bucket.openDownloadStreamByName(filename, {
+      start,
+      end: expectedEnd,
+    });
+
+    // Start reading from stream to get file meta
+    stream.resume();
+
+    return new Promise(resolve =>
+      stream.on('file', () => {
+        const { file } = stream.s;
+
+        resolve({
+          stream,
+          meta: {
+            ...file,
+            start,
+            end: end || file.length,
+          },
+        });
+      })
+    );
   }
 
   handleShutdown() {
