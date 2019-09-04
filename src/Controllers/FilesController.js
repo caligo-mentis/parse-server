@@ -10,10 +10,6 @@ const legacyFilesRegex = new RegExp(
 );
 
 export class FilesController extends AdaptableController {
-  getFileData(config, filename) {
-    return this.adapter.getFileData(filename);
-  }
-
   createFile(config, filename, data, contentType) {
     const extname = path.extname(filename);
 

@@ -6,7 +6,6 @@
 // Adapter classes must implement the following functions:
 // * createFile(filename, data, contentType)
 // * deleteFile(filename)
-// * getFileData(filename)
 // * getFileStream(filename, options)
 // * getFileProperties(filename)
 // * getFileLocation(config, filename)
@@ -59,16 +58,6 @@ export class FilesAdapter {
    * @return {Promise} a promise that should pass object with file params
    */
   getFileProperties(filename: string): Promise {}
-
-  /** Responsible for retrieving the data of the specified file
-   *
-   * TODO: Stream interface should be used instead. Delete in next major release
-   *
-   * @param {string} filename - the name of file to retrieve
-   *
-   * @return {Promise} a promise that should pass with the file data or fail on error
-   */
-  getFileData(filename: string): Promise<any> {}
 
   /** Returns an absolute URL where the file can be accessed
    *
