@@ -41,37 +41,37 @@ export class FilesRouter {
   getHandler(req, res) {
     const config = Config.get(req.params.appId);
     const filesController = config.filesController;
-    const filename = req.params.filename;
-    const contentType = mime.getType(filename);
+
     const range = req.get('Range');
+    const filename = req.params.filename;
 
-    if (range) {
-      filesController
-        .getFileStream(config, filename, getRange(range))
-        .then(({ stream, meta }) => {
-          handleFileStream(stream, res, { ...meta, contentType });
-        })
-        .catch(() => {
-          res.status(404);
-          res.set('Content-Type', 'text/plain');
-          res.end('File not found.');
-        });
-    } else {
-      filesController
-        .getFileStream(config, filename)
-        .then(({ stream, meta }) => {
+    res.set('Content-Type', mime.getType(filename));
+
+    filesController
+      .getFileProperties(config, filename)
+      .then(properties => {
+        const { length } = properties;
+        let options;
+
+        if (range) {
+          options = getRange(range);
+
+          const { start = 0, end = length } = options;
+
+          res.writeHead(206, {
+            'Accept-Ranges': 'bytes',
+            'Content-Range': `bytes ${start}-${end}/${length}`,
+            'Content-Length': end - start + 1,
+          });
+        } else {
           res.status(200);
-          res.set('Content-Type', contentType);
-          res.set('Content-Length', meta.length);
+          res.set('Content-Length', length);
+        }
 
-          stream.pipe(res);
-        })
-        .catch(() => {
-          res.status(404);
-          res.set('Content-Type', 'text/plain');
-          res.end('File not found.');
-        });
-    }
+        return filesController.getFileStream(config, filename, options);
+      })
+      .then(stream => stream.pipe(res))
+      .catch(() => fileNotFound(res));
   }
 
   createHandler(req, res, next) {
@@ -142,23 +142,16 @@ export class FilesRouter {
   }
 }
 
+function fileNotFound(res) {
+  res.status(404);
+  res.set('Content-Type', 'text/plain');
+  res.end('File not found.');
+}
+
 function getRange(range) {
   const parts = range.replace(/bytes=/, '').split('-');
   return {
     start: parseInt(parts[0], 10),
     end: parts[1] ? parseInt(parts[1], 10) : undefined,
   };
-}
-
-function handleFileStream(stream, res, meta) {
-  const { start, end, length, contentType } = meta;
-
-  res.writeHead(206, {
-    'Content-Range': 'bytes ' + start + '-' + end + '/' + length,
-    'Accept-Ranges': 'bytes',
-    'Content-Length': end - start + 1,
-    'Content-Type': contentType,
-  });
-
-  stream.pipe(res);
 }

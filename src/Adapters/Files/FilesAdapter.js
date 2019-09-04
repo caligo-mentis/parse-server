@@ -6,7 +6,8 @@
 // Adapter classes must implement the following functions:
 // * createFile(filename, data, contentType)
 // * deleteFile(filename)
-// * getFileData(filename)
+// * getFileStream(filename, options)
+// * getFileProperties(filename)
 // * getFileLocation(config, filename)
 //
 // Default is GridFSBucketAdapter, which requires mongo
@@ -40,13 +41,23 @@ export class FilesAdapter {
    */
   deleteFile(filename: string): Promise {}
 
-  /** Responsible for retrieving the data of the specified file
+  /** Responsible for retrieving the data of the specified file as stream
+   *
+   * @param {string} filename - the name of file to retrieve
+   * @param {object} [options.start] - start byte of data range
+   * @param {object} [options.end] - end byte of data range
+   *
+   * @return {Promise} a promise that should pass with the stream object or fail on error
+   */
+  getFileStream(filename: string, options): Promise {}
+
+  /** Returns file properties with required `length` property
    *
    * @param {string} filename - the name of file to retrieve
    *
-   * @return {Promise} a promise that should pass with the file data or fail on error
+   * @return {Promise} a promise that should pass object with file params
    */
-  getFileData(filename: string): Promise<any> {}
+  getFileProperties(filename: string): Promise {}
 
   /** Returns an absolute URL where the file can be accessed
    *
