@@ -81,21 +81,6 @@ export class GridFSBucketAdapter extends FilesAdapter {
     return documents[0];
   }
 
-  async getFileData(filename: string) {
-    const stream = await this.getFileStream(filename);
-
-    return new Promise((resolve, reject) => {
-      const chunks = [];
-      stream.on('data', data => {
-        chunks.push(data);
-      });
-      stream.on('end', () => {
-        resolve(Buffer.concat(chunks));
-      });
-      stream.on('error', reject);
-    });
-  }
-
   getFileLocation(config, filename) {
     return (
       config.mount +
