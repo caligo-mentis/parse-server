@@ -70,8 +70,19 @@ export class GridFSBucketAdapter extends FilesAdapter {
     );
   }
 
+  async getFileProperties(filename: string) {
+    const bucket = await this._getBucket();
+    const documents = await bucket.find({ filename: filename }).toArray();
+
+    if (documents.length === 0) {
+      throw new Error('FileNotFound');
+    }
+
+    return documents[0];
+  }
+
   async getFileData(filename: string) {
-    const { stream } = await this.getFileStream(filename);
+    const stream = await this.getFileStream(filename);
 
     return new Promise((resolve, reject) => {
       const chunks = [];
@@ -81,9 +92,7 @@ export class GridFSBucketAdapter extends FilesAdapter {
       stream.on('end', () => {
         resolve(Buffer.concat(chunks));
       });
-      stream.on('error', err => {
-        reject(err);
-      });
+      stream.on('error', reject);
     });
   }
 
@@ -105,28 +114,10 @@ export class GridFSBucketAdapter extends FilesAdapter {
 
     if (end) expectedEnd = end + 1;
 
-    const stream = bucket.openDownloadStreamByName(filename, {
+    return bucket.openDownloadStreamByName(filename, {
       start,
       end: expectedEnd,
     });
-
-    // Start reading from stream to get file meta
-    stream.resume();
-
-    return new Promise(resolve =>
-      stream.on('file', () => {
-        const { file } = stream.s;
-
-        resolve({
-          stream,
-          meta: {
-            ...file,
-            start,
-            end: end || file.length,
-          },
-        });
-      })
-    );
   }
 
   handleShutdown() {

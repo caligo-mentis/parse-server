@@ -7,6 +7,8 @@
 // * createFile(filename, data, contentType)
 // * deleteFile(filename)
 // * getFileData(filename)
+// * getFileStream(filename, options)
+// * getFileProperties(filename)
 // * getFileLocation(config, filename)
 //
 // Default is GridFSBucketAdapter, which requires mongo
@@ -40,7 +42,27 @@ export class FilesAdapter {
    */
   deleteFile(filename: string): Promise {}
 
+  /** Responsible for retrieving the data of the specified file as stream
+   *
+   * @param {string} filename - the name of file to retrieve
+   * @param {object} [options.start] - start byte of data range
+   * @param {object} [options.end] - end byte of data range
+   *
+   * @return {Promise} a promise that should pass with the stream object or fail on error
+   */
+  getFileStream(filename: string, options): Promise {}
+
+  /** Returns file properties with required `length` property
+   *
+   * @param {string} filename - the name of file to retrieve
+   *
+   * @return {Promise} a promise that should pass object with file params
+   */
+  getFileProperties(filename: string): Promise {}
+
   /** Responsible for retrieving the data of the specified file
+   *
+   * TODO: Stream interface should be used instead. Delete in next major release
    *
    * @param {string} filename - the name of file to retrieve
    *
